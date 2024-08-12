@@ -1,0 +1,9 @@
+FollowedLog {
+    margin: 1 2 0 2;
+    width: 1fr;
+    height: 98%;
+}
+
+Horizontal {
+    keyline: thin grey;
+}
