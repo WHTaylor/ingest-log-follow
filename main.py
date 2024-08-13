@@ -28,6 +28,8 @@ def strip_crap(line):
     return f"{v('day')}/{v('month')} {v('time')} {v('logging_class')}.{v('level')} - {v('message')}".strip("\\n")
 
 
+CATCHUP_LINES = 100
+
 class FollowedLog(Static):
     lines = reactive([])
     lines_read = 0
@@ -48,7 +50,15 @@ class FollowedLog(Static):
 
     @work(thread=True)
     def setup(self) -> None:
-        self.tail = open(self.filename, "r")
+        line_end_positions = []
+        with open(self.filename, "rb") as f:
+            for line in f:
+                line_end_positions.append(f.tell())
+
+        f = open(self.filename, "r")
+        if len(line_end_positions) > CATCHUP_LINES:
+            f.seek(line_end_positions[-CATCHUP_LINES - 1])
+        self.tail = f
 
     def on_unmount(self) -> None:
         if self.tail:
@@ -137,6 +147,11 @@ test_files = [
     ("test1", "C:/Users/rop61488/test/test1.log"),
     ("test2", "C:/Users/rop61488/test/test2.log"),
     ("test3", "C:/Users/rop61488/test/test3.log"),
+]
+test_ingest = [
+    ("FileWatcher", "C:/FBS/Logs/TestFileWatcher.log"),
+    ("LiveIngest", "C:/FBS/Logs/TestLiveIngest.log"),
+    ("XMLtoICAT", "C:/FBS/Logs/TestXMLtoICAT.log")
 ]
 
 if __name__ == "__main__":
