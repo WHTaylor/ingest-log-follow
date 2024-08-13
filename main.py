@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import re
+from argparse import ArgumentParser
 
 from textual import events, work
 from textual.app import App, ComposeResult
@@ -150,5 +151,21 @@ test_ingest = [
 ]
 
 if __name__ == "__main__":
-    app = LogFollowApp(dev_files)
+    parser = ArgumentParser(
+            prog="log-follow",
+            description="View live ingest logs in real time")
+    parser.add_argument(
+            "target",
+            choices=["prod", "dev", "test"],
+            help="choose which environment's logs to watch, defaults to prod",
+            nargs="?",
+            default="prod")
+    args = parser.parse_args()
+
+    match args.target:
+        case "prod": files = prod_files
+        case "dev": files = dev_files
+        case "test": files = test_ingest
+
+    app = LogFollowApp(files)
     app.run()
