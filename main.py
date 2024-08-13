@@ -63,8 +63,15 @@ class FollowedLog(Static):
         log = self.query_one(RichLog)
         if self.lines and self.lines_read < len(self.lines):
             for i in range(self.lines_read + 1, len(self.lines) + 1):
-                log.write(self.lines[i - 1], shrink=True)
+                log.write(self.lines[i - 1])
             self.lines_read = len(self.lines)
+
+    def on_resize(self, event) -> None:
+        """ Rewrite log lines so that wrapping is recalculated for new width """
+        rl = self.query_one(RichLog)
+        rl.clear()
+        for l in self.lines:
+            rl.write(l)
 
     def compose(self) -> ComposeResult:
         yield Static(self.title, classes="title")
@@ -77,19 +84,50 @@ class LogFollowApp(App):
         ("q", "quit", "Quit")
     ]
 
+    def __init__(self, logs):
+        super().__init__()
+        self.logs = logs
+        
     def compose(self) -> ComposeResult:
         with Horizontal():
-            yield FollowedLog(
-                    "FileWatcher",
-                    "//icatliveingest/c$/FBS/Logs/FileWatcher.log")
-            yield FollowedLog(
-                    "LiveIngest",
-                    "//icatliveingest/c$/FBS/Logs/LiveIngest.log")
-            yield FollowedLog(
-                    "XMLtoICAT",
-                    "//icatliveingest/c$/FBS/Logs/XMLtoICAT.log")
+            for title, file in self.logs:
+                yield FollowedLog(title, file)
+
         yield Footer()
 
+    def on_key(self, event: events.Key) -> None:
+        if event.key.isdigit():
+            i = int(event.key)
+
+            children = list(self.query(FollowedLog))
+            if i == 0:
+                for c in children:
+                    c.display = True
+            elif i <= len(children):
+                for j, c in enumerate(children):
+                    if i - 1 == j:
+                        c.display = True
+                    else:
+                        c.display = False
+
+
+dev_files = [
+    ("FileWatcher", "//icatdevingest/c$/FBS/Logs/FileWatcher.log"),
+    ("LiveIngest", "//icatdevingest/c$/FBS/Logs/LiveIngest.log"),
+    ("XMLtoICAT", "//icatdevingest/c$/FBS/Logs/XMLtoICAT.log")
+]
+prod_files = [
+    ("FileWatcher", "//icatliveingest/c$/FBS/Logs/FileWatcher.log"),
+    ("LiveIngest", "//icatliveingest/c$/FBS/Logs/LiveIngest.log"),
+    ("XMLtoICAT", "//icatliveingest/c$/FBS/Logs/XMLtoICAT.log")
+]
+test_files = [
+    ("test1", "C:/Users/rop61488/test/test1.log"),
+    ("test2", "C:/Users/rop61488/test/test2.log"),
+    ("test3", "C:/Users/rop61488/test/test3.log"),
+    ("test4", "C:/Users/rop61488/test/test4.log"),
+]
+
 if __name__ == "__main__":
-    app = LogFollowApp()
+    app = LogFollowApp(prod_files)
     app.run()
