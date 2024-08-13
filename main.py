@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import re
+import time
 from datetime import datetime as dt
 
 from rich.syntax import Syntax
 from rich.table import Table
 
-from textual import events
+from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
+from textual.messages import Message
 from textual.reactive import reactive
 from textual.widgets import RichLog, Footer, Static
 
@@ -30,24 +32,38 @@ class FollowedLog(Static):
     lines = reactive([])
     lines_read = 0
 
+    class LogUpdated(Message):
+        def __init__(self, new_log_lines):
+            super().__init__()
+            self.new_log_lines = new_log_lines
+
     def __init__(self, title, filename):
         super().__init__()
         self.title = title
-        f = open(filename, "r")
-        self.tail = f
+        self.filename = filename
 
     def on_mount(self) -> None:
-        # Catch up on previous lines
-        self.lines = self.get_new_lines()
+        self.setup()
         self.update_timer = self.set_interval(1 / 60, self.poll_lines)
+
+    @work(thread=True)
+    def setup(self) -> None:
+        self.tail = open(self.filename, "r")
 
     def on_unmount(self) -> None:
         if self.tail:
             self.tail.close()
 
+    @work(thread=True)
     def poll_lines(self) -> None:
+        if not hasattr(self, "tail") or not self.tail:
+            return
+
         if (new_lines := self.get_new_lines()):
-            self.lines = self.lines + new_lines
+            self.post_message(self.LogUpdated(new_lines))
+
+    def on_followed_log_log_updated(self, ev: LogUpdated) -> None:
+        self.lines = self.lines + ev.new_log_lines
 
     def get_new_lines(self) -> [str]:
         new_lines = []
@@ -71,7 +87,7 @@ class FollowedLog(Static):
 
     def compose(self) -> ComposeResult:
         yield Static(self.title, classes="title")
-        yield RichLog(wrap=True, max_lines=2000)
+        yield RichLog(wrap=True)
 
 
 class LogFollowApp(App):
@@ -121,9 +137,8 @@ test_files = [
     ("test1", "C:/Users/rop61488/test/test1.log"),
     ("test2", "C:/Users/rop61488/test/test2.log"),
     ("test3", "C:/Users/rop61488/test/test3.log"),
-    ("test4", "C:/Users/rop61488/test/test4.log"),
 ]
 
 if __name__ == "__main__":
-    app = LogFollowApp(prod_files)
+    app = LogFollowApp(dev_files)
     app.run()
