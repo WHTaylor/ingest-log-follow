@@ -30,8 +30,11 @@ class FollowedLog(Static):
     lines = reactive([])
     lines_read = 0
 
-    def __init__(self, filename):
+    def __init__(self, title, filename):
         super().__init__()
+
+        self.title = title
+
         f = open(filename, "r")
         fsize = f.tell()
         f.seek(max(fsize - 2048, 0), 0) # Seek back a couple KB (hopefully enough)
@@ -64,6 +67,7 @@ class FollowedLog(Static):
             self.lines_read = len(self.lines)
 
     def compose(self) -> ComposeResult:
+        yield Static(self.title, classes="title")
         yield RichLog(wrap=True, max_lines=2000)
 
 
@@ -75,9 +79,15 @@ class LogFollowApp(App):
 
     def compose(self) -> ComposeResult:
         with Horizontal():
-            yield FollowedLog("//icatliveingest/c$/FBS/Logs/FileWatcher.log")
-            yield FollowedLog("//icatliveingest/c$/FBS/Logs/LiveIngest.log")
-            yield FollowedLog("//icatliveingest/c$/FBS/Logs/XMLtoICAT.log")
+            yield FollowedLog(
+                    "FileWatcher",
+                    "//icatliveingest/c$/FBS/Logs/FileWatcher.log")
+            yield FollowedLog(
+                    "LiveIngest",
+                    "//icatliveingest/c$/FBS/Logs/LiveIngest.log")
+            yield FollowedLog(
+                    "XMLtoICAT",
+                    "//icatliveingest/c$/FBS/Logs/XMLtoICAT.log")
         yield Footer()
 
 if __name__ == "__main__":

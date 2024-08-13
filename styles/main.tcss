@@ -1,9 +1,16 @@
 FollowedLog {
-    margin: 1 2 0 2;
+    margin: 0 1;
     width: 1fr;
     height: 98%;
+    background: $panel-darken-1;
+    border: double $primary-background-lighten-1;
 }
 
-Horizontal {
-    keyline: thin grey;
+FollowedLog RichLog {
+    background: $panel-darken-1;
+}
+
+FollowedLog .title {
+    text-style: italic;
+    color: $primary-lighten-3;
 }
