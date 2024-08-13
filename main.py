@@ -32,12 +32,8 @@ class FollowedLog(Static):
 
     def __init__(self, title, filename):
         super().__init__()
-
         self.title = title
-
         f = open(filename, "r")
-        fsize = f.tell()
-        f.seek(max(fsize - 2048, 0), 0) # Seek back a couple KB (hopefully enough)
         self.tail = f
 
     def on_mount(self) -> None:
@@ -87,7 +83,7 @@ class LogFollowApp(App):
     def __init__(self, logs):
         super().__init__()
         self.logs = logs
-        
+
     def compose(self) -> ComposeResult:
         with Horizontal():
             for title, file in self.logs:
