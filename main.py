@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 import re
-import time
-from datetime import datetime as dt
-
-from rich.syntax import Syntax
-from rich.table import Table
 
 from textual import events, work
 from textual.app import App, ComposeResult
@@ -25,7 +20,7 @@ def strip_crap(line):
     if not m:
         return line
     def v(group_name): return m.group(group_name)
-    return f"{v('day')}/{v('month')} {v('time')} {v('logging_class')}.{v('level')} - {v('message')}".strip("\\n")
+    return f"{v('day')}/{v('month')} {v('time')} {v('logging_class')} {v('level')} - {v('message')}".strip("\\n")
 
 
 CATCHUP_LINES = 100
